@@ -1,0 +1,55 @@
+name: Notify Discord on Push
+
+on:
+  push:
+    branches:
+      - main
+      - "**"
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Send message to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{
+                     "username": "GitHub Actions", 
+                     "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", 
+                     "embeds": [
+                       {
+                         "title": "New Push to Repository!",
+                         "description": "A push has been made to the repository. View the changes [here](${{ github.event.compare }}).",
+                         "color": 5814783,
+                         "fields": [
+                           {
+                             "name": "Repository",
+                             "value": "${{ github.repository }}",
+                             "inline": true
+                           },
+                           {
+                             "name": "Branch",
+                             "value": "${{ github.ref_name }}",
+                             "inline": true
+                           },
+                           {
+                             "name": "Committer",
+                             "value": "${{ github.actor }}",
+                             "inline": true
+                           },
+                           {
+                             "name": "Push Name",
+                             "value": "${{ github.event.head_commit.message }}",
+                             "inline": false
+                           }
+                         ]
+                       }
+                     ]
+                   }' \
+               $DISCORD_WEBHOOK_URL
