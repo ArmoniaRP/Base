@@ -224,9 +224,69 @@ function JailPlayer(playerId)
 end
 
 function BanPlayer(playerId)
-    -- Exemple simple pour bannir un joueur
-    ESX.ShowNotification("Ban non implémenté")
+    local xPlayer = ESX.GetPlayerFromId(playerId)
+    if not xPlayer then
+        ESX.ShowNotification("~r~Le joueur est introuvable.")
+        return
+    end
+
+    -- Demande la raison et la durée au staff
+    ESX.UI.Menu.Open('dialog', GetCurrentResourceName(), 'ban_reason', {
+        title = "Raison du bannissement"
+    }, function(data, menu)
+        local reason = data.value
+        if not reason or reason == "" then
+            ESX.ShowNotification("~r~Veuillez entrer une raison valide.")
+            menu.close()
+            return
+        end
+
+        ESX.UI.Menu.Open('dialog', GetCurrentResourceName(), 'ban_duration', {
+            title = "Durée du ban (en heures, 0 pour permanent)"
+        }, function(data2, menu2)
+            local duration = tonumber(data2.value)
+            if not duration or duration < 0 then
+                ESX.ShowNotification("~r~Veuillez entrer une durée valide.")
+                menu2.close()
+                return
+            end
+
+            -- Calcul du temps d'expiration
+            local banTime = (duration == 0) and 0 or (os.time() + (duration * 60 * 60))
+            local identifier = xPlayer.getIdentifier()
+            local playerName = GetPlayerName(playerId)
+
+            -- Enregistrement dans la base de données
+            MySQL.Async.execute(
+                'INSERT INTO bans (identifier, name, reason, expire) VALUES (@identifier, @name, @reason, @expire)',
+                {
+                    ['@identifier'] = identifier,
+                    ['@name'] = playerName,
+                    ['@reason'] = reason,
+                    ['@expire'] = banTime
+                },
+                function(rowsChanged)
+                    if rowsChanged > 0 then
+                        -- Expulsion immédiate du joueur banni
+                        DropPlayer(playerId, "Vous avez été banni pour : " .. reason .. ". Durée : " .. (duration == 0 and "permanent" or duration .. " heure(s)."))
+                        ESX.ShowNotification("~g~" .. playerName .. " a été banni avec succès.")
+                    else
+                        ESX.ShowNotification("~r~Erreur lors de l'ajout du ban.")
+                    end
+                end
+            )
+
+            menu2.close()
+        end, function(data2, menu2)
+            menu2.close()
+        end)
+
+        menu.close()
+    end, function(data, menu)
+        menu.close()
+    end)
 end
+
 
 function ViewPlayerVehicles(playerId)
     -- Logique pour voir les véhicules du joueur
