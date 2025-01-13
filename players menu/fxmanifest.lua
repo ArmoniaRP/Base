@@ -1,7 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'Lyknie'
+author 'Armonia Team'
 description 'Menu Joueur pour Armonia RP'
 version '1.0.0'
 
