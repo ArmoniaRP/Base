@@ -1,4 +1,5 @@
 -- client.lua
+local ESX = exports['es_extended']:getSharedObject()
 
 local menuOpen = false -- Indique si le menu est ouvert
 local selectedOption = 1 -- Option actuellement sélectionnée
@@ -9,19 +10,27 @@ local mainMenuOptions = {
     "Informations Personnelles",
     "Touches du Serveur",
     "Gestion Factures",
-    "Documents officiels",
     "Rejoindre le discord",
     "Logs des factures"
 }
 
 -- Sous-menus
-local subMenus = {
-    ["Informations Personnelles"] = {
-        "Nom : Tim Bradford",
-        "Âge : 25 ans",
-        "Métier : Policier"
-    },
-    ["Touches du Serveur"] = {
+local subMenus = {}
+    
+for _, account in pairs(ESX.PlayerData.accounts) do
+    if account.name == "bank" then
+        bankMoney = account.money
+        break
+    end
+end
+    subMenus["Informations Personnelles"] = {
+        "Nom : " .. ESX.PlayerData.firstName .." ".. ESX.PlayerData.lastName,
+        "Âge : " .. ESX.PlayerData.dateofbirth,
+        "Métier : " .. ESX.PlayerData.job.grade_name,
+        "Argent en cash : " .. ESX.PlayerData.money,
+        "Argent en bank : " .. bankMoney,
+    }
+    subMenus["Touches du Serveur"] = {
         "F5 : Ouvrir/fermer ce menu",
         "F6 : Ouvrir/fermer menu job",
         "F7 : Ouvrir/fermer menu Gang",
@@ -29,21 +38,17 @@ local subMenus = {
         "F1 : Téléphone",
         "E : Interagir",
         "X : Ceinture",
-        "H : Lever les main "
-    },
-    ["Gestion Factures"] = {
+        "H : Lever les mains "
+    }
+    subMenus["Gestion Factures"] = {
         "Aucune facture disponible pour le moment."
-    },
-    ["Documents officiels"] = {
-        "Pas de documents disponibles."
-    },
-    ["Rejoindre le discord"] = {
+    }
+    subMenus["Rejoindre le discord"] = {
         "Rejoignez notre Discord : discord.gg/ArmoniaRP"
-    },
-    ["Logs des factures"] = {
+    }
+    subMenus["Logs des factures"] = {
         "Aucun log disponible pour le moment."
     }
-}
 
 -- Fonction pour afficher un texte centré
 local function DrawTextCentered(text, x, y, scale, color, shadow)
